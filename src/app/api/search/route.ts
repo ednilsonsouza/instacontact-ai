@@ -1,6 +1,6 @@
 import { NextRequest } from "next/server";
 import type { Lead } from "@/lib/types";
-import { searchMultiEngines, scrapePageForLeads, type SearchResult } from "@/lib/scraper";
+import { googleSearch, scrapePageForLeads, type SearchResult } from "@/lib/scraper";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
@@ -24,7 +24,7 @@ export async function POST(req: NextRequest) {
 
   const profession = (body.profession ?? "").trim();
   const state = (body.state ?? "").trim().toUpperCase();
-  const max = Math.min(body.max ?? 30, 60);
+  const max = Math.min(body.max ?? 30, 50);
 
   if (!profession) {
     return new Response(JSON.stringify({ error: "profession_required" }), {
@@ -33,8 +33,7 @@ export async function POST(req: NextRequest) {
     });
   }
 
-  const stateLabel = BR_STATES.includes(state) ? state : "";
-
+  const stateLabel = BR_STATES.includes(state) ? state : "Brasil";
   const queries = buildQueries(profession, stateLabel);
 
   const encoder = new TextEncoder();
@@ -45,7 +44,7 @@ export async function POST(req: NextRequest) {
         controller.enqueue(encoder.encode(`data: ${JSON.stringify(data)}\n\n`));
       };
 
-      send("progress", { status: "searching", current_source: "Buscando...", total_found: 0, with_email: 0, with_phone: 0, sources_tried: [] });
+      send("progress", { status: "searching", current_source: "Buscando no Google...", total_found: 0, with_email: 0, with_phone: 0, sources_tried: [] });
 
       const allLeads: Lead[] = [];
       const seenUrls = new Set<string>();
@@ -55,14 +54,29 @@ export async function POST(req: NextRequest) {
         const q = queries[qi];
         send("progress", {
           status: "searching",
-          current_source: `Busca ${qi + 1}/${queries.length}: ${q.slice(0, 60)}`,
+          current_source: `Busca ${qi + 1}/${queries.length}: "${q.slice(0, 50)}"`,
           total_found: allLeads.length,
           with_email: allLeads.filter((l) => l.email).length,
           with_phone: allLeads.filter((l) => l.phone).length,
           sources_tried: [...new Set(allLeads.map((l) => l.source))],
         });
 
-        const results: SearchResult[] = await searchMultiEngines(q, max);
+        const results: SearchResult[] = [];
+        for (const start of [1, 11]) {
+          const batch = await googleSearch(q, start);
+          results.push(...batch);
+          if (batch.length < 10) break;
+          await sleep(200);
+        }
+
+        send("progress", {
+          status: "searching",
+          current_source: `Analisando ${results.length} páginas...`,
+          total_found: allLeads.length,
+          with_email: allLeads.filter((l) => l.email).length,
+          with_phone: allLeads.filter((l) => l.phone).length,
+          sources_tried: [...new Set(allLeads.map((l) => l.source))],
+        });
 
         for (const result of results) {
           if (seenUrls.has(result.url)) continue;
@@ -78,23 +92,15 @@ export async function POST(req: NextRequest) {
               send("lead", lead);
             }
           } catch {
-            /* skip failed page */
+            /* skip */
           }
 
-          send("progress", {
-            status: "searching",
-            current_source: `Processando ${sourceShort(result.url)}`,
-            total_found: allLeads.length,
-            with_email: allLeads.filter((l) => l.email).length,
-            with_phone: allLeads.filter((l) => l.phone).length,
-            sources_tried: [...new Set(allLeads.map((l) => l.source))],
-          });
-
           if (allLeads.length >= max) break;
-          await sleep(300);
+          await sleep(150);
         }
 
         if (allLeads.length >= max) break;
+        await sleep(300);
       }
 
       send("progress", {
@@ -120,22 +126,13 @@ export async function POST(req: NextRequest) {
 }
 
 function buildQueries(profession: string, state: string): string[] {
-  const queries: string[] = [];
-  const loc = state || "Brasil";
-  queries.push(`${profession} ${loc} email telefone contato`);
-  queries.push(`"${profession}" "${loc}" contato email`);
-  queries.push(`site:instagram.com ${profession} ${loc}`);
-  queries.push(`site:linkedin.com/in ${profession} ${loc}`);
-  queries.push(`${profession} ${loc} whatsapp agende`);
-  return queries;
-}
-
-function sourceShort(url: string): string {
-  try {
-    return new URL(url).hostname.replace(/^www\./, "");
-  } catch {
-    return url.slice(0, 40);
-  }
+  return [
+    `${profession} ${state} email telefone contato`,
+    `"${profession}" "${state}" contato email`,
+    `site:instagram.com ${profession} ${state}`,
+    `site:linkedin.com/in ${profession} ${state}`,
+    `${profession} ${state} whatsapp agende`,
+  ];
 }
 
 function sleep(ms: number): Promise<void> {
