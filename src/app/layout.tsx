@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Geist } from "next/font/google";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -7,15 +7,10 @@ const geistSans = Geist({
   subsets: ["latin"],
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
-
 export const metadata: Metadata = {
-  title: "InstaContact AI — Extrator Inteligente de Contatos do Instagram",
+  title: "LeadFinder — Encontre contatos por profissão e estado",
   description:
-    "Extraia e-mail e WhatsApp de perfis Instagram Business em escala via orquestração inteligente de APIs do RapidAPI. Enriquecimento, validação e export multiformato.",
+    "Busque na web e-mails e telefones de profissionais por profissão e estado. Dados públicos, extração em tempo real.",
 };
 
 export default function RootLayout({
@@ -24,11 +19,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html
-      lang="pt-BR"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
-    >
-      <body className="min-h-full flex flex-col bg-[var(--background)] text-[var(--foreground)]">
+    <html lang="pt-BR" className={`${geistSans.variable} h-full antialiased`}>
+      <body className="min-h-full bg-[var(--background)] text-[var(--foreground)]">
         {children}
       </body>
     </html>
