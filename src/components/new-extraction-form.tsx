@@ -124,7 +124,7 @@ export function NewExtractionForm({ endpoints }: { endpoints: EndpointOpt[] }) {
   }
 
   return (
-    <form onSubmit={onSubmit} className="space-y-6">
+    <form onSubmit={onSubmit} className="space-y-6 pb-32">
       <Card>
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-sm font-semibold text-white">1. Fonte de dados</h2>
@@ -249,7 +249,7 @@ export function NewExtractionForm({ endpoints }: { endpoints: EndpointOpt[] }) {
         )}
       </Card>
 
-      <Card className="sticky bottom-4 bg-[var(--surface-2)] border-[var(--primary)]/30">
+      <Card className="sticky bottom-4 z-30 bg-[var(--surface-2)] border-[var(--primary)]/30">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="text-sm">
             <div className="text-[var(--muted)] text-xs">Custo estimado</div>
@@ -260,7 +260,7 @@ export function NewExtractionForm({ endpoints }: { endpoints: EndpointOpt[] }) {
           </div>
           <div className="flex items-center gap-3">
             {error && <span className="text-xs text-[var(--danger)]">{error}</span>}
-            <Button type="submit" size="lg" disabled={submitting || items.length === 0}>
+            <Button type="submit" size="lg" disabled={submitting}>
               {submitting ? "Iniciando…" : "Iniciar extração"}
             </Button>
           </div>

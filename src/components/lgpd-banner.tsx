@@ -34,8 +34,8 @@ export function LgpdBanner() {
   }
 
   return (
-    <div className="fixed inset-x-0 bottom-0 z-50 p-4">
-      <div className="mx-auto max-w-4xl rounded-xl border border-[var(--border)] bg-[var(--surface-2)] p-4 shadow-2xl">
+    <div className="fixed inset-x-0 bottom-0 z-40 p-4 pointer-events-none">
+      <div className="mx-auto max-w-4xl rounded-xl border border-[var(--border)] bg-[var(--surface-2)] p-4 shadow-2xl pointer-events-auto">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <p className="text-xs text-[var(--muted)] leading-relaxed max-w-3xl">
             <strong className="text-white">Conformidade LGPD &amp; Termos Instagram.</strong> O InstaContact
